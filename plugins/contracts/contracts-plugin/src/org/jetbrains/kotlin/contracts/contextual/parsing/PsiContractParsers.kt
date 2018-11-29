@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.contracts.contextual.ContextualEffectSystem
 import org.jetbrains.kotlin.contracts.contextual.resolution.*
 import org.jetbrains.kotlin.contracts.description.EffectDeclaration
 import org.jetbrains.kotlin.contracts.description.expressions.FunctionReference
+import org.jetbrains.kotlin.contracts.description.expressions.FunctionReferenceImpl
 import org.jetbrains.kotlin.contracts.parsing.*
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtCallExpression
@@ -35,7 +36,7 @@ internal class PsiFactParser(
         val argumentExpression = resolvedCall.firstArgumentAsExpressionOrNull() ?: return emptyList()
         val ownerFunction = expression.parents.firstOrNull { it is KtNamedFunction } as? KtNamedFunction ?: return emptyList()
         val ownerDescriptor = bindingContext[BindingContext.FUNCTION, ownerFunction] ?: return emptyList()
-        val owner = FunctionReference(ownerDescriptor)
+        val owner = FunctionReferenceImpl(ownerDescriptor)
 
         val descriptorName = descriptor.name
 
