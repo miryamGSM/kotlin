@@ -8,12 +8,14 @@ package org.jetbrains.kotlin.contracts.contextual
 import org.jetbrains.kotlin.checkers.AbstractDiagnosticsTest
 import org.jetbrains.kotlin.cli.jvm.compiler.KotlinCoreEnvironment
 import org.jetbrains.kotlin.extensions.ContractsExtension
+import org.jetbrains.kotlin.serialization.ContractSerializerExtension
 import java.io.File
 
 abstract class AbstractContextualEffectsDiagnosticTest : AbstractDiagnosticsTest() {
     override fun createEnvironment(file: File): KotlinCoreEnvironment {
         val environment = super.createEnvironment(file)
         ContractsExtension.registerExtensionPoint(environment.project)
+        ContractSerializerExtension.registerExtensionPoint(environment.project)
         registerExtensions(environment.project)
         return environment
     }
