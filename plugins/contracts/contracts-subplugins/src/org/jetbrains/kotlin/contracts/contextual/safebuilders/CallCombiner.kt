@@ -46,7 +46,7 @@ internal object CallCombiner : ContextCombiner {
             val kind = callInfo.kind
             calls[functionReference] = CallInfo(
                 callInfo.sourceElement,
-                InvocationKind.combine(kind, EXACTLY_ONCE)
+                InvocationKind.and(kind, EXACTLY_ONCE)
             )
         } else {
             calls[functionReference] = CallInfo(sourceElement, EXACTLY_ONCE)

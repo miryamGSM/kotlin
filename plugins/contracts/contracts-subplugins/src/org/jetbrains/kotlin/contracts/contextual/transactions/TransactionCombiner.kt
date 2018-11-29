@@ -31,7 +31,7 @@ internal object TransactionCombiner : ContextCombiner {
 
         val openedTransactions = context.openedTransactions.toMutableMap()
         val currentKind = openedTransactions[provider.openedTransaction] ?: InvocationKind.ZERO
-        openedTransactions[provider.openedTransaction] = InvocationKind.combine(currentKind, InvocationKind.EXACTLY_ONCE)
+        openedTransactions[provider.openedTransaction] = InvocationKind.and(currentKind, InvocationKind.EXACTLY_ONCE)
         return TransactionContext(openedTransactions)
     }
 }

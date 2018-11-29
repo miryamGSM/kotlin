@@ -5,107 +5,29 @@
 
 package org.jetbrains.kotlin.contracts.description
 
-/*
-| or   | 0..0 | 0..1 | 1..1 | 1..* | 0..* |
-| ---- | -----| ---- | ---- | ---- | ---- |
-| 0..0 | 0..0 | 0..1 | 0..1 | 0..* | 0..* |
-| 0..1 | 0..1 | 0..1 | 0..1 | 0..* | 0..* |
-| 1..1 | 0..1 | 0..1 | 1..1 | 1..* | 0..* |
-| 1..* | 0..* | 0..* | 1..* | 1..* | 0..* |
-| 0..* | 0..* | 0..* | 0..* | 0..* | 0..* |
+import kotlin.math.max
+import kotlin.math.min
 
-| or            | ZERO         | AT_MOST_ONCE | EXACTLY_ONCE  | AT_LEAST_ONCE | UNKNOWN |
-| ------------- | ------------ | ------------ | ------------- | ------------- | ------- |
-| ZERO          | ZERO         | AT_MOST_ONCE | AT_MOST_ONCE  | UNKNOWN       | UNKNOWN |
-| AT_MOST_ONCE  | AT_MOST_ONCE | AT_MOST_ONCE | AT_MOST_ONCE  | UNKNOWN       | UNKNOWN |
-| EXACTLY_ONCE  | AT_MOST_ONCE | AT_MOST_ONCE | EXACTLY_ONCE  | AT_LEAST_ONCE | UNKNOWN |
-| AT_LEAST_ONCE | UNKNOWN      | UNKNOWN      | AT_LEAST_ONCE | AT_LEAST_ONCE | UNKNOWN |
-| UNKNOWN       | UNKNOWN      | UNKNOWN      | UNKNOWN       | UNKNOWN       | UNKNOWN |
-
-
-| combine | 0..0 | 0..1 | 1..1 | 1..* | 0..* |
-| ------- | ---- | ---- | ---- | ---- | ---- |
-| 0..0    | 0..0 | 0..1 | 1..1 | 1..* | 0..* |
-| 0..1    | 0..1 | 0..* | 1..* | 1..* | 0..* |
-| 1..1    | 1..1 | 1..* | 1..* | 1..* | 1..* |
-| 1..*    | 1..* | 1..* | 1..* | 1..* | 1..* |
-| 0..*    | 0..* | 0..* | 1..* | 1..* | 0..* |
-
-| combine       | ZERO          | AT_MOST_ONCE  | EXACTLY_ONCE  | AT_LEAST_ONCE | UNKNOWN       |
-| ------------- | ------------- | ------------- | ------------- | ------------- | ------------- |
-| ZERO          | ZERO          | AT_MOST_ONCE  | EXACTLY_ONCE  | AT_LEAST_ONCE | UNKNOWN       |
-| AT_MOST_ONCE  | AT_MOST_ONCE  | UNKNOWN       | AT_LEAST_ONCE | AT_LEAST_ONCE | UNKNOWN       |
-| EXACTLY_ONCE  | EXACTLY_ONCE  | AT_LEAST_ONCE | AT_LEAST_ONCE | AT_LEAST_ONCE | AT_LEAST_ONCE |
-| AT_LEAST_ONCE | AT_LEAST_ONCE | AT_LEAST_ONCE | AT_LEAST_ONCE | AT_LEAST_ONCE | AT_LEAST_ONCE |
-| UNKNOWN       | UNKNOWN       | UNKNOWN       | AT_LEAST_ONCE | AT_LEAST_ONCE | UNKNOWN       |
-*/
-
-enum class InvocationKind {
-    ZERO,          // 0..0
-    AT_MOST_ONCE,  // 0..1
-    EXACTLY_ONCE,  // 1..1
-    AT_LEAST_ONCE, // 1..*
-    UNKNOWN;       // 0..*
+enum class InvocationKind(private val left: Int, private val right: Int) {
+    ZERO(0, 0),          // 0..0
+    AT_MOST_ONCE(0, 1),  // 0..1
+    EXACTLY_ONCE(1, 1),  // 1..1
+    AT_LEAST_ONCE(1, 2), // 1..*
+    UNKNOWN(0, 2);       // 0..*
 
     companion object {
-        fun or(x: InvocationKind, y: InvocationKind) = when (x) {
-            ZERO -> when (y) {
-                ZERO -> ZERO
-                AT_MOST_ONCE -> AT_MOST_ONCE
-                EXACTLY_ONCE -> AT_MOST_ONCE
-                AT_LEAST_ONCE -> UNKNOWN
-                UNKNOWN -> UNKNOWN
-            }
-            AT_MOST_ONCE -> when (y) {
-                ZERO -> AT_MOST_ONCE
-                AT_MOST_ONCE -> AT_MOST_ONCE
-                EXACTLY_ONCE -> AT_MOST_ONCE
-                AT_LEAST_ONCE -> UNKNOWN
-                UNKNOWN -> UNKNOWN
-            }
-            EXACTLY_ONCE -> when (y) {
-                ZERO -> AT_MOST_ONCE
-                AT_MOST_ONCE -> AT_MOST_ONCE
-                EXACTLY_ONCE -> EXACTLY_ONCE
-                AT_LEAST_ONCE -> AT_LEAST_ONCE
-                UNKNOWN -> UNKNOWN
-            }
-            AT_LEAST_ONCE -> when (y) {
-                ZERO -> UNKNOWN
-                AT_MOST_ONCE -> UNKNOWN
-                EXACTLY_ONCE -> AT_LEAST_ONCE
-                AT_LEAST_ONCE -> AT_LEAST_ONCE
-                UNKNOWN -> UNKNOWN
-            }
-            UNKNOWN -> UNKNOWN
+        private fun fromRange(left: Int, right: Int): InvocationKind = when (min(left, 1) to min(right, 2)) {
+            0 to 0 -> ZERO
+            0 to 1 -> AT_MOST_ONCE
+            1 to 1 -> EXACTLY_ONCE
+            1 to 2 -> AT_LEAST_ONCE
+            0 to 2 -> UNKNOWN
+            else -> throw IllegalArgumentException()
         }
 
-        fun combine(x: InvocationKind, y: InvocationKind) = when (x) {
-            ZERO -> when (y) {
-                ZERO -> ZERO
-                AT_MOST_ONCE -> AT_MOST_ONCE
-                EXACTLY_ONCE -> EXACTLY_ONCE
-                AT_LEAST_ONCE -> AT_LEAST_ONCE
-                UNKNOWN -> UNKNOWN
-            }
-            AT_MOST_ONCE -> when (y) {
-                ZERO -> AT_MOST_ONCE
-                AT_MOST_ONCE -> UNKNOWN
-                EXACTLY_ONCE -> AT_LEAST_ONCE
-                AT_LEAST_ONCE -> AT_LEAST_ONCE
-                UNKNOWN -> UNKNOWN
-            }
-            EXACTLY_ONCE -> when (y) {
-                ZERO -> EXACTLY_ONCE
-                else -> AT_LEAST_ONCE
-            }
-            AT_LEAST_ONCE -> AT_LEAST_ONCE
-            UNKNOWN -> when (y) {
-                EXACTLY_ONCE -> AT_LEAST_ONCE
-                AT_LEAST_ONCE -> AT_LEAST_ONCE
-                else -> UNKNOWN
-            }
-        }
+        fun or(x: InvocationKind, y: InvocationKind): InvocationKind = fromRange(min(x.left, y.left), max(x.right, y.right))
+
+        fun and(x: InvocationKind, y: InvocationKind): InvocationKind = fromRange(x.left + y.left, x.right + y.right)
     }
 
 }
