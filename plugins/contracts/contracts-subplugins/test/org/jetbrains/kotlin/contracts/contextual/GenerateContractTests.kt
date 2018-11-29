@@ -12,5 +12,9 @@ fun main(args: Array<String>) {
         testClass<AbstractContextualEffectsDiagnosticTest> {
             model("contracts")
         }
+
+        testClass<AbstractLoadJavaContractsTest> {
+            model("loadJava", extension = "kt", testMethod = "doTestCompiledKotlinWithStdlib")
+        }
     }
 }
