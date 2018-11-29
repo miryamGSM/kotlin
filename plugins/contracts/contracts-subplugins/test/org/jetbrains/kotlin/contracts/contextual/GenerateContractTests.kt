@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.generators.tests.generator.testGroup
 fun main(args: Array<String>) {
     testGroup("plugins/contracts/contracts-subplugins/test", "plugins/contracts/contracts-subplugins/testData") {
         testClass<AbstractContextualEffectsDiagnosticTest> {
-            model("")
+            model("contracts")
         }
     }
 }
