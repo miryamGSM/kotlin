@@ -17,6 +17,7 @@ import org.jetbrains.kotlin.resolve.scopes.receivers.ReceiverValue
 
 fun ESValue.extractReceiverValue(): ReceiverValue? = when(this) {
     is ESReceiver -> receiver
+    is ESDataFlowValueWithReceiver -> receiver
     is ESDataFlowValue -> (descriptor as? ReceiverParameterDescriptor)?.value
     else -> null
 }
