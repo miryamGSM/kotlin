@@ -11,8 +11,8 @@ dependencies {
 val jar: Jar by tasks
 jar.apply {
     dependsOn(sources)
+    baseName = "kotlin-stdlib-common"
     classifier = "sources"
-    val commonSourcesJar = project(":kotlin-stdlib-common").configurations
-            .getByName("sources").artifacts.files.files.single()
-    from(zipTree(commonSourcesJar))
+
+    from(zipTree(sources.singleFile))
 }
