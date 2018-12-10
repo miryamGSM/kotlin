@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.contracts.contextual.ContractsCliOptions.CONTRACTS_J
 
 object ContractsCliOptions {
     val CONTRACTS_JAR = CliOption(
-        name = "contract",
+        optionName = "contract",
         valueDescription = "<path>",
         description = "Specify path to .jar file with specific contracts",
         allowMultipleOccurrences = true
