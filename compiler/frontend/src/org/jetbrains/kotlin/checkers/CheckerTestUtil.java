@@ -242,10 +242,14 @@ public class CheckerTestUtil {
         );
 
         for (Pair<? extends WritableSlice<? extends KtExpression, ?>, ? extends DebugInfoDiagnosticFactory> factory : factoryList) {
-            for (KtExpression expression : bindingContext.getSliceContents(factory.getFirst()).keySet()) {
+            List<? extends KtExpression> test = bindingContext.getSliceContents(factory.getFirst()).keySet().asList();
+
+            for (KtExpression expression : test) {
                 if (PsiTreeUtil.isAncestor(root, expression, false)) {
                     Diagnostic diagnostic = factory.getSecond().createDiagnostic(expression, bindingContext, dataFlowValueFactory, languageVersionSettings, moduleDescriptor);
-                    debugAnnotations.add(new ActualDiagnostic(diagnostic, platform, withNewInference));
+                    ActualDiagnostic t = new ActualDiagnostic(diagnostic, platform, withNewInference);
+
+                    debugAnnotations.add(t);
                 }
             }
         }
@@ -340,11 +344,25 @@ public class CheckerTestUtil {
         List<TextDiagnostic> expectedDiagnostics = currentExpected.getDiagnostics();
 
         for (TextDiagnostic expectedDiagnostic : expectedDiagnostics) {
-            Map.Entry<AbstractTestDiagnostic, TextDiagnostic> actualDiagnosticEntry = CollectionsKt.firstOrNull(
+            Integer numberDiagnosticsWithSameName = CollectionsKt.count(
                     actualDiagnostics.entrySet(), entry -> {
                         TextDiagnostic actualDiagnostic = entry.getValue();
                         return expectedDiagnostic.getDescription().equals(actualDiagnostic.getDescription()) &&
                                expectedDiagnostic.inferenceCompatibility.isCompatible(actualDiagnostic.inferenceCompatibility);
+                    }
+            );
+
+            Map.Entry<AbstractTestDiagnostic, TextDiagnostic> actualDiagnosticEntry = CollectionsKt.firstOrNull(
+                    actualDiagnostics.entrySet(), entry -> {
+                        TextDiagnostic actualDiagnostic = entry.getValue();
+                        if (numberDiagnosticsWithSameName <= 1) {
+                            return expectedDiagnostic.getDescription().equals(actualDiagnostic.getDescription()) &&
+                                   expectedDiagnostic.inferenceCompatibility.isCompatible(actualDiagnostic.inferenceCompatibility);
+                        } else {
+                            return expectedDiagnostic.getDescription().equals(actualDiagnostic.getDescription()) &&
+                                   expectedDiagnostic.inferenceCompatibility.isCompatible(actualDiagnostic.inferenceCompatibility) &&
+                                   expectedDiagnostic.parameters.equals(actualDiagnostic.parameters);
+                        }
                     }
             );
 
@@ -360,8 +378,7 @@ public class CheckerTestUtil {
                 actualDiagnostic.enhanceInferenceCompatibility(expectedDiagnostic.inferenceCompatibility);
 
                 diagnosticToInput.put(actualDiagnostic, expectedDiagnostic);
-            }
-            else {
+            } else {
                 callbacks.missingDiagnostic(expectedDiagnostic, expectedStart, expectedEnd);
             }
         }
@@ -716,7 +733,7 @@ public class CheckerTestUtil {
 
     public static class DebugInfoDiagnosticFactory1 extends DiagnosticFactory1<PsiElement, String> implements DebugInfoDiagnosticFactory {
         public static final DebugInfoDiagnosticFactory1 EXPRESSION_TYPE =
-                DebugInfoDiagnosticFactory1.create("EXPRESSION_TYPE", Severity.INFO, true);
+                create("EXPRESSION_TYPE", Severity.INFO, true);
 
         final private String name;
         final private Boolean withExplicitDefinitionOnly;

@@ -8,7 +8,7 @@
  *
  * SPEC VERSION: 0.1-draft
  * PLACE: type-inference, smart-casts, smart-casts-sources -> paragraph 6 -> sentence 1
- * NUMBER: 10
+ * NUMBER: 11
  * DESCRIPTION: Nullability condition, if, intersection types
  */
 
@@ -34,7 +34,10 @@ fun case_2(y: Int) {
     }
 }
 
-// TESTCASE NUMBER: 3
+/*
+ * TESTCASE NUMBER: 3
+ * ISSUES: KT-28670
+ */
 fun case_3(a: Int?, b: Float?, c: Double?, d: Boolean?) {
     when (d) {
         true -> a
@@ -53,7 +56,10 @@ fun case_3(a: Int?, b: Float?, c: Double?, d: Boolean?) {
     }
 }
 
-// TESTCASE NUMBER: 4
+/*
+ * TESTCASE NUMBER: 4
+ * ISSUES: KT-28670
+ */
 interface A4
 interface B4
 
@@ -77,9 +83,12 @@ fun case_4(a: A4?, b: B4?, d: Boolean) {
             <!DEBUG_INFO_EXPRESSION_TYPE("{B4? & A4?}")!>it<!>
         }
     }
-}
+    }
 
-// TESTCASE NUMBER: 5
+/*
+ * TESTCASE NUMBER: 5
+ * ISSUES: KT-28670
+ */
 interface A5
 interface B5
 
@@ -103,7 +112,10 @@ fun case_5(a: A5?, b: B5?, d: Boolean) {
     }
 }
 
-// TESTCASE NUMBER: 6
+/*
+ * TESTCASE NUMBER: 6
+ * ISSUES: KT-28670
+ */
 interface A6
 interface B6
 interface C6
@@ -132,7 +144,10 @@ fun case_6(a: A6?, b: B6, d: Boolean) {
     }
 }
 
-// TESTCASE NUMBER: 7
+/*
+ * TESTCASE NUMBER: 7
+ * ISSUES: KT-28670
+ */
 interface A7
 interface B7
 interface C7
