@@ -17,6 +17,16 @@ import org.jetbrains.kotlin.ir.types.classifierOrFail
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.utils.addToStdlib.assertedCast
 
+val IrBuilderWithScope.parent get() = scope.scopeOwnerSymbol.owner.let { it as? IrDeclarationParent ?: (it as IrDeclaration).parent }
+
+fun IrBuilderWithScope.trySetParentOf(declaration: IrDeclaration) {
+    // TODO: hack.
+    try {
+        declaration.parent = parent
+    } catch (e: UninitializedPropertyAccessException) {
+
+    }
+}
 
 inline fun IrBuilderWithScope.irLet(
     value: IrExpression,
@@ -24,7 +34,7 @@ inline fun IrBuilderWithScope.irLet(
     nameHint: String? = null,
     body: (VariableDescriptor) -> IrExpression
 ): IrExpression {
-    val irTemporary = scope.createTemporaryVariable(value, nameHint)
+    val irTemporary = scope.createTemporaryVariable(value, nameHint).also { trySetParentOf(it) }
     val irResult = body(irTemporary.descriptor)
     val irBlock = IrBlockImpl(startOffset, endOffset, irResult.type, origin)
     irBlock.statements.add(irTemporary)
@@ -38,7 +48,7 @@ inline fun IrBuilderWithScope.irLetS(
     nameHint: String? = null,
     body: (IrValueSymbol) -> IrExpression
 ): IrExpression {
-    val irTemporary = scope.createTemporaryVariable(value, nameHint)
+    val irTemporary = scope.createTemporaryVariable(value, nameHint).also { trySetParentOf(it) }
     val irResult = body(irTemporary.symbol)
     val irBlock = IrBlockImpl(startOffset, endOffset, irResult.type, origin)
     irBlock.statements.add(irTemporary)
@@ -53,13 +63,13 @@ fun <T : IrElement> IrStatementsBuilder<T>.irTemporary(
     typeHint: KotlinType? = null,
     irType: IrType? = null
 ): IrVariable {
-    val temporary = scope.createTemporaryVariable(value, nameHint, type = typeHint, irType = irType)
+    val temporary = scope.createTemporaryVariable(value, nameHint, type = typeHint, irType = irType).also { trySetParentOf(it) }
     +temporary
     return temporary
 }
 
 fun <T : IrElement> IrStatementsBuilder<T>.defineTemporary(value: IrExpression, nameHint: String? = null): VariableDescriptor {
-    val temporary = scope.createTemporaryVariable(value, nameHint)
+    val temporary = scope.createTemporaryVariable(value, nameHint).also { trySetParentOf(it) }
     +temporary
     return temporary.descriptor
 }
@@ -67,18 +77,15 @@ fun <T : IrElement> IrStatementsBuilder<T>.defineTemporary(value: IrExpression, 
 fun <T : IrElement> IrStatementsBuilder<T>.irTemporaryVar(
     value: IrExpression,
     nameHint: String? = null,
-    typeHint: KotlinType? = null,
-    parent: IrDeclarationParent? = null
+    typeHint: KotlinType? = null
 ): IrVariable {
-    val temporary = scope.createTemporaryVariable(value, nameHint, isMutable = true, type = typeHint)
-    parent?.let { temporary.parent = it }
+    val temporary = scope.createTemporaryVariable(value, nameHint, isMutable = true, type = typeHint).also { trySetParentOf(it) }
     +temporary
     return temporary
 }
 
-
 fun <T : IrElement> IrStatementsBuilder<T>.defineTemporaryVar(value: IrExpression, nameHint: String? = null): VariableDescriptor {
-    val temporary = scope.createTemporaryVariable(value, nameHint, isMutable = true)
+    val temporary = scope.createTemporaryVariable(value, nameHint, isMutable = true).also { trySetParentOf(it) }
     +temporary
     return temporary.descriptor
 }
