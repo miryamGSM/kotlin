@@ -52,32 +52,26 @@ fun generateFunction(repository: Repository, function: Operation, functionName: 
             )
         }
 
-fun resolveNamedConstructorAttributes(iface: InterfaceDefinition, repository: Repository) : List<GenerateAttribute> {
-    val attributes = if (iface.isInterface())  {
-        iface.mapAttributes(repository) .toMutableList()
-    } else { mutableListOf() }
 
-    val externals = repository.externals[iface.name]?.mapNotNull { repository.interfaces[it] } ?: emptyList()
-    val superTypes = iface.superTypes.mapNotNull { repository.interfaces.get(it) }.toMutableList()
-
-    superTypes.addAll(externals)
-
-    attributes.addAll(superTypes.flatMap { it -> resolveNamedConstructorAttributes(it, repository) })
-    return attributes
+private fun InterfaceDefinition.getAllSuperTypes(repository: Repository) : List<InterfaceDefinition> {
+    val externals = repository.externals[name]?.mapNotNull { repository.interfaces[it] } ?: emptyList()
+    return superTypes.mapNotNull { repository.interfaces.get(it) } + externals
 }
 
-fun resolveNamedConstructorMethods(iface: InterfaceDefinition, repository: Repository) : List<GenerateFunction> {
-    val attributes = if (iface.isInterface())  {
-        iface.mapOperations(repository).map { it.copy(override = true)} .toMutableList()
-    } else { mutableListOf() }
+private fun InterfaceDefinition.resolveNamedConstructorAttributes(repository: Repository) : List<GenerateAttribute> {
+    val attributes = if (isInterface()) {
+        mapAttributes(repository)
+    } else { listOf() }
 
-    val externals = repository.externals[iface.name]?.mapNotNull { repository.interfaces[it] } ?: emptyList()
-    val superTypes = iface.superTypes.mapNotNull { repository.interfaces.get(it) }.toMutableList()
+    return attributes + getAllSuperTypes(repository).flatMap { it.resolveNamedConstructorAttributes(repository) }
+}
 
-    superTypes.addAll(externals)
+private fun InterfaceDefinition.resolveNamedConstructorMethods(repository: Repository) : List<GenerateFunction> {
+    val attributes = if (isInterface()) {
+        mapOperations(repository).map { it.copy(override = true)}
+    } else { listOf() }
 
-    attributes.addAll(superTypes.flatMap { it -> resolveNamedConstructorMethods(it, repository) })
-    return attributes
+    return attributes + getAllSuperTypes(repository).flatMap { it.resolveNamedConstructorMethods(repository) }
 }
 
 fun generateFunctions(repository: Repository, function: Operation): List<GenerateFunction> {
@@ -205,8 +199,8 @@ fun generateTrait(repository: Repository, iface: InterfaceDefinition): GenerateC
                 namespace = "",
                 kind = GenerateDefinitionKind.CLASS,
                 superTypes = listOf(iface.name),
-                memberAttributes = resolveNamedConstructorAttributes(iface, repository).toMutableList(),
-                memberFunctions = resolveNamedConstructorMethods(iface, repository).toMutableList(),
+                memberAttributes = iface.resolveNamedConstructorAttributes(repository).toMutableList(),
+                memberFunctions = iface.resolveNamedConstructorMethods(repository).toMutableList(),
                 constants = emptyList(),
                 primaryConstructor = ConstructorWithSuperTypeCall(generateConstructorAsFunction(repository, namedConstructor), namedConstructor),
                 secondaryConstructors = emptyList(),
