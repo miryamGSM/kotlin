@@ -12,9 +12,17 @@
  * DESCRIPTION: Nullability condition, if, receivers
  */
 
-fun <T> T?.case_1() {
-    if (this != null) {
-        <!DEBUG_INFO_EXPRESSION_TYPE("T?")!>this<!>
-        <!DEBUG_INFO_EXPRESSION_TYPE("T!!"), DEBUG_INFO_SMARTCAST!>this<!>.hashCode()
+/*
+ * TESTCASE NUMBER: 1
+ * NOTE: lazy smartcasts
+ */
+interface A1 { fun test() }
+
+fun Number?.case_1() {
+    if (this is Int?) {
+        if (this != null) {
+            <!DEBUG_INFO_EXPRESSION_TYPE("kotlin.Int")!>this<!>
+            <!DEBUG_INFO_EXPRESSION_TYPE("kotlin.Int"), DEBUG_INFO_SMARTCAST!>this<!>.toByte()
+        }
     }
 }

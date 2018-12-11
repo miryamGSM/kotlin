@@ -342,27 +342,14 @@ public class CheckerTestUtil {
 
         Map<AbstractTestDiagnostic, TextDiagnostic> actualDiagnostics = currentActual.getTextDiagnosticsMap();
         List<TextDiagnostic> expectedDiagnostics = currentExpected.getDiagnostics();
+        Set<String> diagnosticNames = new HashSet<>();
 
         for (TextDiagnostic expectedDiagnostic : expectedDiagnostics) {
-            Integer numberDiagnosticsWithSameName = CollectionsKt.count(
+            Map.Entry<AbstractTestDiagnostic, TextDiagnostic> actualDiagnosticEntry = CollectionsKt.firstOrNull(
                     actualDiagnostics.entrySet(), entry -> {
                         TextDiagnostic actualDiagnostic = entry.getValue();
                         return expectedDiagnostic.getDescription().equals(actualDiagnostic.getDescription()) &&
                                expectedDiagnostic.inferenceCompatibility.isCompatible(actualDiagnostic.inferenceCompatibility);
-                    }
-            );
-
-            Map.Entry<AbstractTestDiagnostic, TextDiagnostic> actualDiagnosticEntry = CollectionsKt.firstOrNull(
-                    actualDiagnostics.entrySet(), entry -> {
-                        TextDiagnostic actualDiagnostic = entry.getValue();
-                        if (numberDiagnosticsWithSameName <= 1) {
-                            return expectedDiagnostic.getDescription().equals(actualDiagnostic.getDescription()) &&
-                                   expectedDiagnostic.inferenceCompatibility.isCompatible(actualDiagnostic.inferenceCompatibility);
-                        } else {
-                            return expectedDiagnostic.getDescription().equals(actualDiagnostic.getDescription()) &&
-                                   expectedDiagnostic.inferenceCompatibility.isCompatible(actualDiagnostic.inferenceCompatibility) &&
-                                   expectedDiagnostic.parameters.equals(actualDiagnostic.parameters);
-                        }
                     }
             );
 
@@ -375,6 +362,7 @@ public class CheckerTestUtil {
                 }
 
                 actualDiagnostics.remove(actualDiagnostic);
+                diagnosticNames.add(actualDiagnostic.getName());
                 actualDiagnostic.enhanceInferenceCompatibility(expectedDiagnostic.inferenceCompatibility);
 
                 diagnosticToInput.put(actualDiagnostic, expectedDiagnostic);
@@ -386,7 +374,7 @@ public class CheckerTestUtil {
         for (AbstractTestDiagnostic unexpectedDiagnostic : actualDiagnostics.keySet()) {
             TextDiagnostic textDiagnostic = actualDiagnostics.get(unexpectedDiagnostic);
 
-            if (hasExplicitDefinitionOnlyOption(unexpectedDiagnostic))
+            if (hasExplicitDefinitionOnlyOption(unexpectedDiagnostic) && !diagnosticNames.contains(unexpectedDiagnostic.getName()))
                 continue;
 
             callbacks.unexpectedDiagnostic(textDiagnostic, actualStart, actualEnd);
@@ -881,10 +869,11 @@ public class CheckerTestUtil {
         }
 
         public Map<AbstractTestDiagnostic, TextDiagnostic> getTextDiagnosticsMap() {
-            Map<AbstractTestDiagnostic, TextDiagnostic> diagnosticMap = new HashMap<>();
+            Map<AbstractTestDiagnostic, TextDiagnostic> diagnosticMap = new TreeMap<>();
             for (AbstractTestDiagnostic diagnostic : diagnostics) {
                 diagnosticMap.put(diagnostic, TextDiagnostic.asTextDiagnostic(diagnostic));
             }
+
             return diagnosticMap;
         }
     }
@@ -922,7 +911,15 @@ public class CheckerTestUtil {
 
         @Override
         public int compareTo(@NotNull AbstractTestDiagnostic diagnostic) {
-            return getName().compareTo(diagnostic.getName());
+            if (this.diagnostic instanceof DiagnosticWithParameters1 && diagnostic instanceof ActualDiagnostic && ((ActualDiagnostic) diagnostic).diagnostic instanceof DiagnosticWithParameters1) {
+                return (getName() + ((DiagnosticWithParameters1) this.diagnostic).getA()).compareTo(diagnostic.getName() + ((DiagnosticWithParameters1) ((ActualDiagnostic) diagnostic).diagnostic).getA());
+            } else if (this.diagnostic instanceof DiagnosticWithParameters1) {
+                return (getName() + ((DiagnosticWithParameters1) this.diagnostic).getA()).compareTo(diagnostic.getName());
+            } else if (diagnostic instanceof ActualDiagnostic && ((ActualDiagnostic) diagnostic).diagnostic instanceof DiagnosticWithParameters1) {
+                return getName().compareTo(diagnostic.getName() + ((DiagnosticWithParameters1) ((ActualDiagnostic) diagnostic).diagnostic).getA());
+            } else {
+                return getName().compareTo(diagnostic.getName());
+            }
         }
 
         ActualDiagnostic(@NotNull Diagnostic diagnostic, @Nullable String platform, boolean withNewInference) {

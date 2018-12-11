@@ -8,7 +8,7 @@
  * SPEC VERSION: 0.1-draft
  * PLACE: type-inference, smart-casts, smart-casts-sources -> paragraph 6 -> sentence 1
  * NUMBER: 15
- * DESCRIPTION: Nullability condition, if, generic types
+ * DESCRIPTION: Nullability condition, if, generic type variables
  */
 
 // TESTCASE NUMBER: 1
@@ -31,7 +31,7 @@ fun <T> case_2(x: T?) {
  */
 fun <T> T.case_3() {
     if (this != null) {
-        <!DEBUG_INFO_EXPRESSION_TYPE("T!! & T")!>this<!>
+        <!DEBUG_INFO_EXPRESSION_TYPE("T!! & T"), DEBUG_INFO_EXPRESSION_TYPE("T")!>this<!>
     }
 }
 
@@ -41,8 +41,8 @@ fun <T> T.case_3() {
  */
 fun <T> T?.case_4() {
     if (this != null) {
-        <!DEBUG_INFO_EXPRESSION_TYPE("T!! & T?")!>this<!>
-        <!DEBUG_INFO_EXPRESSION_TYPE("T!!"), DEBUG_INFO_SMARTCAST!>this<!>.hashCode()
+        <!DEBUG_INFO_EXPRESSION_TYPE("T!! & T?"), DEBUG_INFO_EXPRESSION_TYPE("T?")!>this<!>
+        <!DEBUG_INFO_EXPRESSION_TYPE("T!!"), DEBUG_INFO_EXPRESSION_TYPE("T?"), DEBUG_INFO_SMARTCAST!>this<!>.hashCode()
     }
 }
 
@@ -55,9 +55,9 @@ interface A5 { fun test() }
 fun <T> T?.case_5() {
     if (this is A5) {
         if (<!SENSELESS_COMPARISON!>this != null<!>) {
-            <!DEBUG_INFO_EXPRESSION_TYPE("A5 & T!! & T?")!>this<!>
-            <!DEBUG_INFO_EXPRESSION_TYPE("A5"), DEBUG_INFO_SMARTCAST!>this<!>.hashCode()
-            <!DEBUG_INFO_EXPRESSION_TYPE("A5"), DEBUG_INFO_SMARTCAST!>this<!>.test()
+            <!DEBUG_INFO_EXPRESSION_TYPE("A5 & T!! & T?"), DEBUG_INFO_EXPRESSION_TYPE("T?")!>this<!>
+            <!DEBUG_INFO_EXPRESSION_TYPE("A5"), DEBUG_INFO_EXPRESSION_TYPE("T?"), DEBUG_INFO_SMARTCAST!>this<!>.hashCode()
+            <!DEBUG_INFO_EXPRESSION_TYPE("A5"), DEBUG_INFO_EXPRESSION_TYPE("T?"), DEBUG_INFO_SMARTCAST!>this<!>.test()
         }
     }
 }
@@ -71,9 +71,9 @@ interface A6 { fun test() }
 fun <T> T?.case_6() {
     if (this is A6?) {
         if (this != null) {
-            <!DEBUG_INFO_EXPRESSION_TYPE("A6 & T!! & T?")!>this<!>
-            <!DEBUG_INFO_EXPRESSION_TYPE("A6"), DEBUG_INFO_SMARTCAST!>this<!>.hashCode()
-            <!DEBUG_INFO_EXPRESSION_TYPE("A6"), DEBUG_INFO_SMARTCAST!>this<!>.test()
+            <!DEBUG_INFO_EXPRESSION_TYPE("A6 & T!! & T?"), DEBUG_INFO_EXPRESSION_TYPE("T?")!>this<!>
+            <!DEBUG_INFO_EXPRESSION_TYPE("A6"), DEBUG_INFO_EXPRESSION_TYPE("T?"), DEBUG_INFO_SMARTCAST!>this<!>.hashCode()
+            <!DEBUG_INFO_EXPRESSION_TYPE("A6"), DEBUG_INFO_EXPRESSION_TYPE("T?"), DEBUG_INFO_SMARTCAST!>this<!>.test()
         }
     }
 }
@@ -84,13 +84,13 @@ fun <T> T?.case_6() {
  */
 interface A7 { fun test() }
 
-fun <T> T?.case_7() {
+fun <T> T.case_7() {
     val x = this
     if (x is A7?) {
         if (x != null) {
-            <!DEBUG_INFO_EXPRESSION_TYPE("A7 & T!! & T?")!>x<!>
-            <!DEBUG_INFO_EXPRESSION_TYPE("T? & A7"), DEBUG_INFO_SMARTCAST!>x<!>.hashCode()
-            <!DEBUG_INFO_EXPRESSION_TYPE("T? & A7"), DEBUG_INFO_SMARTCAST!>x<!>.test()
+            <!DEBUG_INFO_EXPRESSION_TYPE("A7 & T!! & T")!>x<!>
+            <!DEBUG_INFO_EXPRESSION_TYPE("T & A7"), DEBUG_INFO_SMARTCAST!>x<!>.hashCode()
+            <!DEBUG_INFO_EXPRESSION_TYPE("T & A7"), DEBUG_INFO_SMARTCAST!>x<!>.test()
         }
     }
 }
@@ -101,10 +101,28 @@ fun <T> T?.case_7() {
  */
 interface A8 { fun test() }
 
-fun Number?.case_8() {
-    if (this is Int?) {
-        if (this != null) {
-            <!DEBUG_INFO_EXPRESSION_TYPE("kotlin.Int"), DEBUG_INFO_SMARTCAST!>this<!>.toByte()
+fun <T> T.case_8() {
+    if (this != null) {
+        if (this is A8?) {
+            <!DEBUG_INFO_EXPRESSION_TYPE("A8 & T!! & T"), DEBUG_INFO_EXPRESSION_TYPE("T")!>this<!>
+            <!DEBUG_INFO_EXPRESSION_TYPE("A8"), DEBUG_INFO_EXPRESSION_TYPE("T"), DEBUG_INFO_SMARTCAST!>this<!>.hashCode()
+            <!DEBUG_INFO_EXPRESSION_TYPE("A8"), DEBUG_INFO_EXPRESSION_TYPE("T"), DEBUG_INFO_SMARTCAST!>this<!>.test()
+        }
+    }
+}
+
+/*
+ * TESTCASE NUMBER: 9
+ * NOTE: lazy smartcasts
+ */
+interface A9 { fun test() }
+
+fun <T : Number> T.case_9() {
+    if (<!SENSELESS_COMPARISON!>this != null<!>) {
+        if (this is A8<!USELESS_NULLABLE_CHECK!>?<!>) {
+            <!DEBUG_INFO_EXPRESSION_TYPE("A8 & T"), DEBUG_INFO_EXPRESSION_TYPE("T")!>this<!>
+            <!DEBUG_INFO_EXPRESSION_TYPE("A8 & T"), DEBUG_INFO_EXPRESSION_TYPE("T")!>this<!>.hashCode()
+            <!DEBUG_INFO_EXPRESSION_TYPE("A8"), DEBUG_INFO_EXPRESSION_TYPE("T"), DEBUG_INFO_SMARTCAST!>this<!>.test()
         }
     }
 }
