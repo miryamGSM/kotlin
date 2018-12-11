@@ -32,7 +32,7 @@ class Transaction {
 // ---------------- TESTS ----------------
 
 fun test_1() {
-    val transaction = Transaction()
+    <!CONTEXTUAL_EFFECT_WARNING(Transaction transaction must be closed)!>val transaction<!> = Transaction()
     transaction.start()
     for (i in 1..10) {
         transaction.<!CONTEXTUAL_EFFECT_WARNING(transaction is not opened)!>setData()<!>
