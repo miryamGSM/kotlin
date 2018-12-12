@@ -61,5 +61,5 @@ class ESLambda(val lambda: KtLambdaExpression, bindingContext: BindingContext) :
 class ESDataFlowReceiver(receiverValue: ReceiverValue, val dataFlowValue: DataFlowValue) : ESReceiver(receiverValue)
 
 // TODO: rename maybe
-class ESDataFlowValueWithReceiver(val receiver: ReceiverValue, descriptor: ValueDescriptor, dataFlowValue: DataFlowValue) :
+class ESDataFlowValueWithExpressionReceiver(val receiver: ReceiverValue, descriptor: ValueDescriptor, dataFlowValue: DataFlowValue) :
     ESDataFlowValue(descriptor, dataFlowValue)

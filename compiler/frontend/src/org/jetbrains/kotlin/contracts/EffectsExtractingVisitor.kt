@@ -158,7 +158,7 @@ class EffectsExtractingVisitor(
             if (value !is ESDataFlowValue) {
                 value
             } else {
-                ESDataFlowValueWithReceiver(this, value.descriptor, value.dataFlowValue)
+                ESDataFlowValueWithExpressionReceiver(this, value.descriptor, value.dataFlowValue)
             }
         }
         is ExtensionReceiver -> ESDataFlowReceiver(this, createDataFlowValue())

@@ -32,12 +32,18 @@ fun buildX(init: XBuilder.() -> Unit): X {
 
 // ---------------- TESTS ----------------
 
-// control flow info is empty on exit
-// need to be discovered
+// TODO: here must be warning, but it's not
 fun test_1() {
     buildX {
         while (true) {
             setValX()
         }
     }
+}
+
+// TODO: that test must not report any warnings, but now it does
+fun test_2() {
+    val builder = XBuilder()
+    builder.<!CONTEXTUAL_EFFECT_WARNING(setValX had invoked EXACTLY_ONCE)!>setValX(10)<!>
+    builder.buildX()
 }

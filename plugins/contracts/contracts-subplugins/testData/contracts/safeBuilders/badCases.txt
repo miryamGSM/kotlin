@@ -6,6 +6,7 @@ public fun buildX(/*0*/ init: XBuilder.() -> kotlin.Unit): X
     ExtensionEffect:LambdaContextCleanerEffectDeclaration(factory=func needs to be called EXACTLY_ONCE, references=[setValX, receiver of init], owner=init)
 
 public fun test_1(): kotlin.Unit
+public fun test_2(): kotlin.Unit
 
 public final data class X {
     public constructor X()
